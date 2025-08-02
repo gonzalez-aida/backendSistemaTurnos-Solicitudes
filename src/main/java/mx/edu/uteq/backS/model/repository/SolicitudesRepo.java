@@ -12,4 +12,10 @@ import mx.edu.uteq.backS.model.entity.Solicitudes;
  */
 public interface SolicitudesRepo extends JpaRepository<Solicitudes,Integer>{
 
+    List<Solicitudes> findByEstado(String estado);
+
+    List<Solicitudes> findByEstadoAndIdProfesor(String estado, int idProfesor);
+
+    List<Solicitudes> findByIdProfesorAndEstadoIn(int idProfesor, List<String> estados);
+
 }
