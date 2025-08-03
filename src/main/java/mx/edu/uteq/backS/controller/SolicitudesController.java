@@ -1,6 +1,7 @@
 package mx.edu.uteq.backS.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import mx.edu.uteq.backS.model.dto.Alumno;
 import mx.edu.uteq.backS.model.dto.Profesor;
+import mx.edu.uteq.backS.model.entity.Solicitudes;
 import mx.edu.uteq.backS.service.SolicitudesService;
 
 @RestController
@@ -62,4 +64,51 @@ public class SolicitudesController {
         return ResponseEntity.ok("Estado actualizado");
     }
 
+
+    @GetMapping("/id/{matricula}/grupo")
+    public ResponseEntity<Integer> obtenerGrupoAlumno(@PathVariable String matricula) {
+        try {
+            Integer idGrupo = serv.obtenerIdGrupoPorMatricula(matricula);
+            return ResponseEntity.ok(idGrupo);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+
+    @GetMapping("/profesores/{matricula}")
+    public ResponseEntity<List<Profesor>> obtenerProfesoresDeAlumno(@PathVariable String matricula) {
+        try {
+            List<Profesor> profesores = serv.obtenerProfesoresPorMatriculaAlumno(matricula);
+            return ResponseEntity.ok(profesores);
+        } catch (RuntimeException e) {
+            System.err.println("Error al obtener profesores del alumno: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @GetMapping("/alumno/{matricula}/detalle")
+    public ResponseEntity<List<Map<String, Object>>> getSolicitudesDetalleByMatricula(@PathVariable String matricula) {
+        try {
+            List<Map<String, Object>> solicitudes = serv.obtenerSolicitudesConDetalles(matricula);
+            if (!solicitudes.isEmpty()) {
+                return ResponseEntity.ok(solicitudes);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (RuntimeException e) {
+            System.err.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<Solicitudes> crearSolicitud(@RequestBody Map<String, Object> solicitudData) {
+        try {
+            Solicitudes nuevaSolicitud = serv.crearNuevaSolicitud(solicitudData);
+            return new ResponseEntity<>(nuevaSolicitud, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
 }

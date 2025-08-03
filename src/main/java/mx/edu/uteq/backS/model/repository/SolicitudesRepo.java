@@ -18,4 +18,6 @@ public interface SolicitudesRepo extends JpaRepository<Solicitudes,Integer>{
 
     List<Solicitudes> findByIdProfesorAndEstadoIn(int idProfesor, List<String> estados);
 
+    List<Solicitudes> findByIdAlumno(Integer idAlumno);
+
 }
