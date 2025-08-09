@@ -19,4 +19,5 @@ public class Solicitudes {
     private String estado;
     private int idProfesor;
     private int idAlumno;
+    private String comentario;
 }

@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import mx.edu.uteq.backS.model.dto.Alumno;
 import mx.edu.uteq.backS.model.dto.Profesor;
 import mx.edu.uteq.backS.model.entity.Solicitudes;
 import mx.edu.uteq.backS.service.SolicitudesService;
@@ -32,37 +31,40 @@ public class SolicitudesController {
     }
 
     @GetMapping("/{idProfesor}/pendientes")
-    public ResponseEntity<List<Alumno>> getAlumnosConSolicitudPendientePorProfesor(
+public ResponseEntity<List<Map<String, Object>>> getAlumnosConSolicitudPendientePorProfesor(
         @PathVariable int idProfesor) {
-        try {
-            List<Alumno> alumnos = serv.obtenerAlumnosConSolicitudPendientePorProfesor(idProfesor);
-            return ResponseEntity.ok(alumnos);
-        } catch (Exception e) {
-            System.err.println("Error al obtener alumnos con solicitud pendiente: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    try {
+        List<Map<String, Object>> alumnos = serv.obtenerAlumnosConSolicitudPendientePorProfesor(idProfesor);
+        return ResponseEntity.ok(alumnos);
+    } catch (Exception e) {
+        System.err.println("Error al obtener alumnos con solicitud pendiente: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
+}
+
 
     @GetMapping("/{idProfesor}/rev-fin")
-    public ResponseEntity<List<Alumno>> getAlumnosConSolicitudRevFinPorProfesor(
+public ResponseEntity<List<Map<String, Object>>> getAlumnosConSolicitudRevFinPorProfesor(
         @PathVariable int idProfesor) {
-        try {
-            List<Alumno> alumnos = serv.obtenerAlumnosConSolicitudRevFinPorProfesor(idProfesor);
-            return ResponseEntity.ok(alumnos);
-        } catch (Exception e) {
-            System.err.println("Error al obtener alumnos con solicitud pendiente: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    try {
+        List<Map<String, Object>> alumnos = serv.obtenerAlumnosConSolicitudRevFinPorProfesor(idProfesor);
+        return ResponseEntity.ok(alumnos);
+    } catch (Exception e) {
+        System.err.println("Error al obtener alumnos: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
+}
 
-    @PutMapping("/{id}/estado")
-    public ResponseEntity<String> actualizarEstado(
-            @PathVariable Integer id,
-            @RequestParam String estado) {
-        
-        serv.actualizarEstado(id, estado);
-        return ResponseEntity.ok("Estado actualizado");
-    }
+
+   @PutMapping("/{id}/estado")
+public ResponseEntity<String> actualizarEstado(
+        @PathVariable Integer id,
+        @RequestBody String estado) {
+
+    String estadoLimpio = estado.replace("\"", "");
+    serv.actualizarEstado(id, estadoLimpio);
+    return ResponseEntity.ok("Estado actualizado");
+}
 
 
     @GetMapping("/id/{matricula}/grupo")

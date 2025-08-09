@@ -1,10 +1,12 @@
 package mx.edu.uteq.backS.service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,37 +38,90 @@ public class SolicitudesService {
         return profesorRest.getProfesoresActivos(true);
     }
 
-    public List<Alumno> obtenerAlumnosConSolicitudPendientePorProfesor(int idProfesor) {
+    public List<Map<String, Object>> obtenerAlumnosConSolicitudPendientePorProfesor(int idProfesor) {
     List<Solicitudes> solicitudesPendientes = repo.findByEstadoAndIdProfesor("Pendiente", idProfesor);
-    
+
     List<Integer> idsAlumnos = solicitudesPendientes.stream()
             .map(Solicitudes::getIdAlumno)
             .distinct()
             .collect(Collectors.toList());
-    
-    if(idsAlumnos.isEmpty()) {
+
+    if (idsAlumnos.isEmpty()) {
         return Collections.emptyList();
     }
-    
-    return alumnoRest.getAlumnosByIds(idsAlumnos);
+
+    List<Alumno> alumnos = alumnoRest.getAlumnosByIds(idsAlumnos);
+    Map<Integer, Alumno> mapaAlumnos = alumnos.stream()
+            .collect(Collectors.toMap(Alumno::getId, Function.identity()));
+
+    List<Map<String, Object>> resultado = new ArrayList<>();
+
+    for (Solicitudes solicitud : solicitudesPendientes) {
+        Alumno alumno = mapaAlumnos.get(solicitud.getIdAlumno());
+
+        if (alumno != null) {
+            Map<String, Object> combinado = new HashMap<>();
+            combinado.put("idSolicitud", solicitud.getId());
+            combinado.put("estado", solicitud.getEstado());
+            combinado.put("comentario", solicitud.getComentario());
+
+            combinado.put("idAlumno", alumno.getId());
+            combinado.put("nombre", alumno.getNombre());
+            combinado.put("matricula", alumno.getMatricula());
+            resultado.add(combinado);
+        }
+    }
+
+    return resultado;
 }
 
-    public List<Alumno> obtenerAlumnosConSolicitudRevFinPorProfesor(int idProfesor) {
+    public List<Map<String, Object>> obtenerAlumnosConSolicitudRevFinPorProfesor(int idProfesor) {
     List<String> estados = Arrays.asList("Revision", "Finalizada");
-    
+
+    // Obtener solicitudes con estado "Revisión" o "Finalizada"
     List<Solicitudes> solicitudesRevFin = repo.findByIdProfesorAndEstadoIn(idProfesor, estados);
-    
+
+    // Extraer los IDs únicos de alumnos
     List<Integer> idsAlumnos = solicitudesRevFin.stream()
             .map(Solicitudes::getIdAlumno)
             .distinct()
             .collect(Collectors.toList());
-    
-    if(idsAlumnos.isEmpty()) {
+
+    if (idsAlumnos.isEmpty()) {
         return Collections.emptyList();
     }
-    
-    return alumnoRest.getAlumnosByIds(idsAlumnos);
+
+    // Llamar al microservicio de alumnos
+    List<Alumno> alumnos = alumnoRest.getAlumnosByIds(idsAlumnos);
+
+    // Mapear idAlumno → Alumno
+    Map<Integer, Alumno> mapaAlumnos = alumnos.stream()
+            .collect(Collectors.toMap(Alumno::getId, Function.identity()));
+
+    // Combinar datos de solicitud y alumno
+    List<Map<String, Object>> resultado = new ArrayList<>();
+
+    for (Solicitudes solicitud : solicitudesRevFin) {
+        Alumno alumno = mapaAlumnos.get(solicitud.getIdAlumno());
+
+        if (alumno != null) {
+            Map<String, Object> combinado = new HashMap<>();
+            combinado.put("idSolicitud", solicitud.getId());
+            combinado.put("estado", solicitud.getEstado());
+            combinado.put("comentario", solicitud.getComentario());
+
+            combinado.put("idAlumno", alumno.getId());
+            combinado.put("nombre", alumno.getNombre());
+            combinado.put("matricula", alumno.getMatricula());
+            // Puedes agregar más campos si el microservicio los retorna
+
+            resultado.add(combinado);
+        }
+    }
+
+    return resultado;
 }
+
 
     public void actualizarEstado(int idSolicitud, String nuevoEstado) {
         Solicitudes solicitud = repo.findById(idSolicitud)
@@ -132,6 +187,8 @@ public class SolicitudesService {
                     if (profesor != null) {
                         detalleSolicitud.put("nombreMaestro", profesor.getNombre());
                         detalleSolicitud.put("cubiculoMaestro", profesor.getCubiculo());
+                        detalleSolicitud.put("comentario", solicitud.getComentario()); 
+                        detalleSolicitud.put("idAlumno", solicitud.getIdAlumno()); 
                     } else {
                         detalleSolicitud.put("nombreMaestro", "No disponible");
                         detalleSolicitud.put("cubiculoMaestro", "No disponible");
@@ -165,6 +222,7 @@ public class SolicitudesService {
     public Solicitudes crearNuevaSolicitud(Map<String, Object> solicitudData) {
         Integer idAlumno = (Integer) solicitudData.get("idAlumno");
         Integer idProfesor = (Integer) solicitudData.get("idProfesor");
+        String comentario = (String) solicitudData.get("comentario");
 
         if (idAlumno == null || idProfesor == null) {
             throw new IllegalArgumentException("El ID del alumno y del profesor son campos requeridos.");
@@ -173,6 +231,7 @@ public class SolicitudesService {
         nuevaSolicitud.setIdAlumno(idAlumno);
         nuevaSolicitud.setIdProfesor(idProfesor);
         nuevaSolicitud.setEstado("Pendiente"); 
+        nuevaSolicitud.setComentario(comentario); 
 
         return repo.save(nuevaSolicitud);
     }
