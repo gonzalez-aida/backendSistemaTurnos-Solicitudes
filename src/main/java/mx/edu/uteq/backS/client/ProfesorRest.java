@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import mx.edu.uteq.backS.model.dto.Profesor;
 
-@FeignClient(name = "servicio-profesores", url = "http://localhost:8085")
+@FeignClient(name = "servicio-profesores", url = "ms-profesores:8085")
 public interface ProfesorRest {
 
     @GetMapping("/api/profesor") 

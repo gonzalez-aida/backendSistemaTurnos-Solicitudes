@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import mx.edu.uteq.backS.model.dto.Alumno;
 
-@FeignClient(name = "alumnos", url = "http://localhost:8080")
+@FeignClient(name = "alumnos", url = "ms-alumnos:8080")
 public interface AlumnoRest {
 
     @PostMapping("/api/alumnos/por-ids")
